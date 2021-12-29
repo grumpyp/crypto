@@ -1,0 +1,261 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+
+function req(theUrl){
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+    xmlHttp.send( null );
+    console.log("execute")
+    var result = JSON.parse(xmlHttp.responseText)
+
+    console.log(result)
+    console.log(typeof(result.market_data.current_price.eur))
+    return result//.market_data.current_price.eur;
+}
+req("https://api.coingecko.com/api/v3/coins/crypto-com-chain/history?date=30-12-2019&localization=false")
+</script>
+
+
+    
+
+<html>
+  <head>
+    <style>
+    .wrapper{
+      width: 100%;
+      height: 100%;
+      display: inline-block;}
+  
+  .panel-1{
+      width: 35%;
+      float: left;
+      height: 60%;
+     
+    }
+  
+  .panel-2{
+      width: 65%;
+      float: right;
+
+      height: 60%;}
+
+    </style>
+  </head>
+  <meta charset="UTF-8">
+    <div class="wrapper">
+      <div class="panel-1">
+        <div id="infos" class="panel-2"><h3>Monthly changes - hover over the diagram</h3>
+          <span id="loading"><b>Its loading amigo</b></span>
+        </div>
+
+      </div>
+      <div class="panel-2">
+      <canvas id="myChart" width="500" ></canvas>
+    </div>
+    </div>
+</html>
+
+<script>
+    const labels = [
+'t-30 days',
+'t-60 days',
+'t-90 days',
+'t-120 days',
+'t-150 days',
+'t-180 days',
+'t-210 days',
+'t-240 days',
+'t-270 days',
+'t-300 days',
+'t-330 days',
+'t-360 days'
+];
+
+
+
+let rueckblick = [30,60,90,120,150,180,210,240,270,300,330,360]
+
+
+function subDays(days) {
+    let dt = new Date ();
+  Date.prototype.subtractDays = function (d) {
+    this.setTime (this.getTime () - (d*24*60*60*1000));
+    return this;
+  }
+
+
+  dt.subtractDays (days);
+  let month = "" + (dt.getMonth() + 1);
+  let day = "" + dt.getDate();
+  let year = dt.getFullYear();
+  if (month.length < 2) month = "0" + month;
+  if (day.length < 2) day = "0" + day;
+
+  let dateF = [day, month, year].join("-");
+  console.log(year)
+  console.log(dateF)
+  return dateF;
+}
+
+const datesSubtracted = [];
+
+for (let i = 0; i < rueckblick.length; i++)
+
+{
+  datesSubtracted.push(subDays(rueckblick[i]))
+}
+
+console.log(datesSubtracted)
+
+const apiCalls = [] 
+
+function getCoinData(coin) {
+  
+
+for (let i = 0; i < datesSubtracted.length; i++)
+{
+  var url = `https://api.coingecko.com/api/v3/coins/${coin}/history?date=${datesSubtracted[i]}&localization=false`
+  apiCalls.push(url)
+}
+
+var apiData = []
+
+for (let i = 0; i < apiCalls.length; i++)
+{
+  apiData.push(req(apiCalls[i]))
+}
+
+console.log(apiData)
+
+//var apiData = [req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-01-2020&localization=false"), req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-11-2020&localization=false"), req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-10-2020&localization=false"), req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-09-2020&localization=false"), req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-08-2020&localization=false"), req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-07-2020&localization=false"), req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-06-2020&localization=false"),req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-05-2020&localization=false"),req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-04-2020&localization=false"),
+//req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-03-2020&localization=false"),req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=28-02-2020&localization=false"),
+//req("https://api.coingecko.com/api/v3/coins/bitcoin/history?date=30-01-2020&localization=false")];
+
+function priceYesterday(coin) {
+  var date = subDays(2)
+  var url = `https://api.coingecko.com/api/v3/coins/${coin}/history?date=${date}&localization=false`
+  var result = req(url)
+  return result;
+
+}
+
+const data = {
+labels: labels,
+datasets: [{
+label: 'My First dataset',
+backgroundColor: ["#0074D9", "#FF4136", "#2ECC40", "#FF851B", "#7FDBFF", "#B10DC9", "#FFDC00", "#001f3f", "#39CCCC", "#01FF70", "#85144b", "#F012BE", "#3D9970", "#111111", "#AAAAAA"],
+data: apiData,
+parsing: {
+                key: 'market_data.current_price.eur'
+            },
+}]
+
+
+};
+
+var priceYesterdayVar = priceYesterday('dogecoin').market_data.current_price.eur;
+
+const config = {
+  type: 'pie',
+  data: data,
+  options: {
+    responsive: false,
+plugins: {
+  title: {
+        display: true,
+        text: 'Crypto.com Coin yearly lookback',
+        padding: 15,
+        font: {
+          size: 32
+        }},
+        subtitle: {
+        display: true,
+        padding: 45,
+        text: 'price changes in t- days. hover on the diagram to get more insights',
+        color: 'grey',
+        font: {
+          size: 22,
+          family: 'tahoma',
+          weight: 'normal',
+          style: 'italic'
+        }
+      },
+  tooltip: {
+    enabled: true,
+    usePointStyle: true,
+    callbacks: { 
+      // To change title in tooltip
+      title: function(tooltipItem, data) {
+        console.log(tooltipItem);
+        return "Daten zum Monat " + tooltipItem[0].label;
+              },
+
+      // To change label in tooltip
+      label: (context) => { 
+              console.log('context', context);
+              //delete childs on hover
+              function removeAllChildNodes(parent) {
+                  while (parent.firstChild) {
+                      parent.removeChild(parent.firstChild);
+                  }
+              }
+              const container = document.querySelector('#infos');
+              removeAllChildNodes(container);
+              //add heading to info div for months
+              var heading = document.createElement("h3");
+              heading.innerHTML = context.label
+              document.getElementById("infos").appendChild(heading);
+              //iterate over all items in api response object
+              for (var entry in context.dataset.data) { 
+                  //only show values from specific month
+                  if (entry == context.dataIndex) {
+                  //create element and add infos
+                  var node = document.createElement("span");
+                  node.innerHTML = ('Forks Github: ' + context.dataset.data[entry].developer_data.forks + '<br> <br>' +
+                  'Stars Github: ' + context.dataset.data[entry].developer_data.stars + '<br> <br>' +
+                  'Price: ' + (context.dataset.data[entry].market_data.current_price.eur).toFixed(6) + '€ <br> <br>' +
+                  'Price from t- days <> price yesterday in % ' +  ((priceYesterdayVar / context.dataset.data[entry].market_data.current_price.eur) * 100).toFixed(6) + '<br><br>' + 
+                  'Total volume: ' + Math.round(context.dataset.data[entry].market_data.total_volume.eur) + '<br> <br>' +
+                  'Reddit Subscribers: ' + Math.round(context.dataset.data[entry].community_data.reddit_subscribers) + '<br> <br>'
+                  
+                  
+                  );
+                  document.getElementById("infos").appendChild(node);
+                  }
+              }
+              var node = document.createElement("span");
+              node.innerHTML = ("<br>");
+              document.getElementById("infos").appendChild(node); 
+              return context.label;
+            
+              
+      }
+    },
+  },
+},
+  },
+};
+
+
+document.getElementById('loading').style.display = "none"
+
+
+const myChart = new Chart(
+document.getElementById('myChart'),
+config
+);
+
+}
+
+function barChart() {
+  return;
+}
+
+
+getCoinData('crypto-com-chain')
+
+</script>
+
+<center id="copy"><a href="https://github.com/grumpyp">Patrick Gerard</a></center>
